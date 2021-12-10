@@ -17,6 +17,7 @@ func getOsmoService() *service.CosmosService {
 	clt, _ := service.NewCosmosService(service.ChainConfig{
 		CosmosBase:          "https://osmosis-1--lcd--archive.datahub.figment.io",
 		TendermintBase:      "https://osmosis-1--rpc--archive.datahub.figment.io",
+		GRPCBase:            os.Getenv("GRPC_BASE"),
 		ApiKey:              os.Getenv("DATAHUB_OSMO_API_KEY"),
 		Bech32PrefixAccAddr: "osmo",
 		Bech32PrefixAccPub:  "osmopub",

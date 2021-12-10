@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -22,6 +24,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type CosmosService struct {
@@ -45,6 +48,20 @@ type ChainConfig struct {
 	EventHandler        func(tx *HistTx, evt TendermintEvent) []TxAction
 }
 
+type tokenAuth struct {
+	token string
+}
+
+func (t tokenAuth) GetRequestMetadata(ctx context.Context, in ...string) (map[string]string, error) {
+	return map[string]string{
+		"authorization": t.token,
+	}, nil
+}
+
+func (tokenAuth) RequireTransportSecurity() bool {
+	return true
+}
+
 // var (
 // TODO - viper? other config means?
 // apiKey         = os.Getenv("DATAHUB_API_KEY")
@@ -58,6 +75,20 @@ func NewCosmosService(chainConfig ChainConfig) (*CosmosService, error) {
 	encodingConfig := MakeEncodingConfig(chainConfig)
 	sdkConfig := sdk.GetConfig()
 	sdkConfig.SetBech32PrefixForAccount(chainConfig.Bech32PrefixAccAddr, chainConfig.Bech32PrefixAccPub)
+
+	grpcConn, err := grpc.DialContext(
+		context.Background(),
+		net.JoinHostPort(chainConfig.GRPCBase, "443"),
+		// TODO do we need WithTransportCredentials ?
+		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")), // The Cosmos SDK doesn't support any transport security mechanism.
+		grpc.WithPerRPCCredentials(tokenAuth{
+			token: chainConfig.ApiKey,
+		}),
+	)
+
+	if err != nil {
+		return nil, err
+	}
 
 	if chainConfig.RegisterTypes == nil {
 		log.Infof("using default cosmos types only")
@@ -76,7 +107,8 @@ func NewCosmosService(chainConfig ChainConfig) (*CosmosService, error) {
 			SetHeader("Authorization", chainConfig.ApiKey).SetTimeout(10 * time.Second),
 		tendermintRPCClient: resty.New().SetBaseURL(chainConfig.TendermintBase).SetHeader("Accept", "application/json").
 			SetHeader("Authorization", chainConfig.ApiKey).SetTimeout(10 * time.Second),
-		// TODO - websockets/grpc
+		grpcConn: grpcConn,
+		// TODO - websockets
 	}
 
 	return c, nil
