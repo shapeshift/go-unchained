@@ -84,7 +84,6 @@ func (c *CosmosService) readBalances(address string) ([]CosmosBalance, error) {
 	cosmoBalances := make([]CosmosBalance, len(balanceRes.Balances))
 
 	for i, bal := range balanceRes.Balances {
-
 		cosmoBalances[i] = CosmosBalance{
 			Denom:  bal.Denom,
 			Amount: bal.Amount.String(),
