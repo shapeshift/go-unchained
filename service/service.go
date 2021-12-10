@@ -79,6 +79,7 @@ func NewCosmosService(chainConfig ChainConfig) (*CosmosService, error) {
 	grpcConn, err := grpc.DialContext(
 		context.Background(),
 		net.JoinHostPort(chainConfig.GRPCBase, "443"),
+		// TODO do we need WithTransportCredentials ?
 		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")), // The Cosmos SDK doesn't support any transport security mechanism.
 		grpc.WithPerRPCCredentials(tokenAuth{
 			token: chainConfig.ApiKey,
@@ -86,7 +87,7 @@ func NewCosmosService(chainConfig ChainConfig) (*CosmosService, error) {
 	)
 
 	if err != nil {
-		log.Fatal("error setting up grpc connection: %s", err)
+		return nil, err
 	}
 
 	if chainConfig.RegisterTypes == nil {
