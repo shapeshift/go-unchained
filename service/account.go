@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec/types"
 	cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -19,17 +18,6 @@ type Account struct {
 	Balance       string        `json:"balance"`
 	Tokens        []TokenAmount `json:"tokens"`
 	Delegations   []Delegation  `json:"delegations"`
-}
-
-type CosmosAccount struct {
-	Address       string     `json:"address"`
-	PubKey        *types.Any `json:"public_key"`
-	AccountNumber uint64     `json:"account_number,string"`
-	Sequence      uint64     `json:"sequence,string"`
-}
-
-type CosmosAccountResponse struct {
-	Account *CosmosAccount `json:"account"`
 }
 
 type Delegation struct {
