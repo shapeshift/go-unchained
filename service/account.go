@@ -1,9 +1,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -76,14 +78,23 @@ func (c *CosmosService) readBalances(address string) ([]CosmosBalance, error) {
 
 	return balancesRes.Balances, nil
 }
-func (c *CosmosService) readAccount(address string) (*CosmosAccount, error) {
-	path := fmt.Sprintf("/cosmos/auth/v1beta1/accounts/%s", address)
-	acctRes := &CosmosAccountResponse{}
-	if err := doGet(c.cosmosLightClient, path, nil, acctRes); err != nil {
-		return nil, fmt.Errorf("error reading account for %s: %s", address, err)
-	}
 
-	return acctRes.Account, nil
+func (c *CosmosService) readAccount(address string) (*authtypes.BaseAccount, error) {
+	authClient := authtypes.NewQueryClient(c.grpcConn)
+	authRes, err := authClient.Account(
+		context.Background(),
+		&authtypes.QueryAccountRequest{Address: address},
+	)
+	if err != nil {
+		log.Errorf("grpc account error", err)
+		return nil, err
+	}
+	account := authtypes.BaseAccount{}
+	err = c.encodingConfig.Marshaler.UnmarshalBinaryBare(authRes.GetAccount().Value, &account)
+	if err != nil {
+		fmt.Println("unmarshal error", err)
+	}
+	return &account, nil
 }
 
 func (c *CosmosService) GetAccount(address string) (*Account, error) {

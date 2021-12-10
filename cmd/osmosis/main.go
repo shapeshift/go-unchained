@@ -23,6 +23,7 @@ func start() {
 		CosmosBase:          os.Getenv("COSMOS_BASE"),
 		TendermintBase:      os.Getenv("TENDERMINT_BASE"),
 		ApiKey:              os.Getenv("DATAHUB_OSMO_API_KEY"),
+		GRPCBase:            os.Getenv("GRPC_BASE"),
 		RestListenAddr:      restListenAddr,
 		Bech32PrefixAccAddr: "osmo",
 		Bech32PrefixAccPub:  "osmopub",
