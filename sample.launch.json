@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Cosmos Unchained",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/cosmos",
+      "env": {
+        "COSMOS_BASE": "https://cosmoshub-4--lcd--archive.datahub.figment.io",
+        "TENDERMINT_BASE": "https://cosmoshub-4--rpc--archive.datahub.figment.io",
+        "DATAHUB_API_KEY": "your_key_here"
+      }
+    },
+    {
+      "name": "Osmosis Unchained",
+      "type": "go",
+      "request": "launch",
+
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/osmosis",
+      "env": {
+        "COSMOS_BASE": "https://osmosis-1--lcd--archive.datahub.figment.io",
+        "TENDERMINT_BASE": "https://osmosis-1--rpc--archive.datahub.figment.io",
+        "DATAHUB_OSMO_API_KEY": "your_key_here",
+        "REST_LISTEN_ADDR": "localhost:1661"
+      }
+    }
+  ]
+}
