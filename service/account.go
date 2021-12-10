@@ -6,6 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -70,13 +71,27 @@ func (c *CosmosService) readDelegations(address string) ([]CosmosDelegationWrapp
 }
 
 func (c *CosmosService) readBalances(address string) ([]CosmosBalance, error) {
-	path := fmt.Sprintf("/cosmos/bank/v1beta1/balances/%s", address)
-	balancesRes := &CosmosBalancesResponse{}
-	if err := doGet(c.cosmosLightClient, path, nil, balancesRes); err != nil {
-		return nil, fmt.Errorf("error reading balances for %s: %s", address, err)
+	bankClient := banktypes.NewQueryClient(c.grpcConn)
+	balanceRes, err := bankClient.AllBalances(
+		context.Background(),
+		&banktypes.QueryAllBalancesRequest{Address: address},
+	)
+	if err != nil {
+		log.Errorf("grpc account error", err)
+		return nil, err
 	}
 
-	return balancesRes.Balances, nil
+	cosmoBalances := make([]CosmosBalance, len(balanceRes.Balances))
+
+	for i, bal := range balanceRes.Balances {
+
+		cosmoBalances[i] = CosmosBalance{
+			Denom:  bal.Denom,
+			Amount: bal.Amount.String(),
+		}
+	}
+
+	return cosmoBalances, nil
 }
 
 func (c *CosmosService) readAccount(address string) (*authtypes.BaseAccount, error) {
@@ -92,7 +107,7 @@ func (c *CosmosService) readAccount(address string) (*authtypes.BaseAccount, err
 	account := authtypes.BaseAccount{}
 	err = c.encodingConfig.Marshaler.UnmarshalBinaryBare(authRes.GetAccount().Value, &account)
 	if err != nil {
-		fmt.Println("unmarshal error", err)
+		log.Errorf("unmarshal error", err)
 	}
 	return &account, nil
 }
