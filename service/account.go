@@ -77,7 +77,7 @@ func (c *CosmosService) readBalances(address string) ([]CosmosBalance, error) {
 		&banktypes.QueryAllBalancesRequest{Address: address},
 	)
 	if err != nil {
-		log.Errorf("grpc account error", err)
+		log.Errorf("grpc balances error", err)
 		return nil, err
 	}
 
