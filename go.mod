@@ -18,6 +18,7 @@ require (
 	github.com/eager7/dogd v0.0.0-20200427085516-2caf59f59dbb // indirect
 	github.com/eager7/dogutil v0.0.0-20200427040807-200e961ba4b5 // indirect
 	github.com/ethereum/go-ethereum v1.10.4 // indirect
+	github.com/felixge/httpsnoop v1.0.1 // indirect
 	github.com/gcash/bchd v0.17.1 // indirect
 	github.com/gcash/bchutil v0.0.0-20201025062739-fc759989ee3e // indirect
 	github.com/google/uuid v1.3.0 // indirect
@@ -59,6 +60,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.3 // indirect
 	github.com/google/btree v1.0.0 // indirect
+	github.com/gorilla/handlers v1.5.1
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect

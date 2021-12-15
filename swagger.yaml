@@ -1,0 +1,234 @@
+basePath: /
+consumes:
+- application/json
+definitions:
+  Account:
+    properties:
+      accountNumber:
+        example: "9810"
+        format: uint64
+        type: string
+        x-go-name: AccountNumber
+      balance:
+        example: "14250"
+        type: string
+        x-go-name: Balance
+      delegations:
+        items:
+          $ref: '#/definitions/Delegation'
+        type: array
+        x-go-name: Delegations
+      pubkey:
+        example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+        type: string
+        x-go-name: Pubkey
+      sequence:
+        example: "43211"
+        format: uint64
+        type: string
+        x-go-name: Sequence
+      tokens:
+        items:
+          $ref: '#/definitions/TokenAmount'
+        type: array
+        x-go-name: Tokens
+    type: object
+    x-go-package: github.com/shapeshift/unchained-cosmos/service
+  Delegation:
+    properties:
+      amount:
+        example: "45531"
+        type: string
+        x-go-name: Amount
+      shares:
+        example: "86544"
+        type: string
+        x-go-name: Shares
+      validator:
+        example: cosmosvaloper156gqf9837u7d4c4678yt3rl4ls9c5vuursrrzf
+        type: string
+        x-go-name: Validator
+    type: object
+    x-go-package: github.com/shapeshift/unchained-cosmos/service
+  HistTx:
+    description: Unchained API Historical Tx Model
+    properties:
+      actions:
+        items:
+          $ref: '#/definitions/TxAction'
+        type: array
+        x-go-name: Actions
+      blockHeight:
+        example: 34534
+        format: int64
+        type: integer
+        x-go-name: BlockHeight
+      confirmations:
+        example: 24346
+        format: int64
+        type: integer
+        x-go-name: Confirmations
+      fee:
+        example: "4223"
+        type: string
+        x-go-name: Fee
+      feeAsset:
+        example: '''uatom'''
+        type: string
+        x-go-name: FeeAsset
+      from:
+        example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+        type: string
+        x-go-name: From
+      gasUsed:
+        example: "383312"
+        type: string
+        x-go-name: GasUsed
+      gasWanted:
+        example: "42345"
+        type: string
+        x-go-name: GasWanted
+      index:
+        example: 678678
+        format: uint64
+        type: integer
+        x-go-name: Index
+      memo:
+        example: This is a memo
+        type: string
+        x-go-name: Memo
+      status:
+        example: confirmed
+        type: string
+        x-go-name: Status
+      timestamp:
+        example: 1639598717717
+        format: int64
+        type: integer
+        x-go-name: Timestamp
+      to:
+        example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+        type: string
+        x-go-name: To
+      txid:
+        example: B3127187CA99D7F2C0BAE4FA26512F204B6CEC80AD3C3AE514B8D3A77CD99B43
+        type: string
+        x-go-name: TxID
+      type:
+        example: send
+        type: string
+        x-go-name: Type
+      value:
+        example: "866543"
+        type: string
+        x-go-name: Value
+    type: object
+    x-go-package: github.com/shapeshift/unchained-cosmos/service
+  TokenAmount:
+    description: Unchained API Types
+    properties:
+      amount:
+        example: "420"
+        type: string
+        x-go-name: Amount
+      denom:
+        example: uatom
+        type: string
+        x-go-name: Denom
+    type: object
+    x-go-package: github.com/shapeshift/unchained-cosmos/service
+  TxAction:
+    properties:
+      GetType:
+        type: string
+    type: object
+    x-go-package: github.com/shapeshift/unchained-cosmos/service
+  TxHistory:
+    properties:
+      pubkey:
+        description: TODO - pagination
+        example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+        type: string
+        x-go-name: Pubkey
+      txs:
+        items:
+          $ref: '#/definitions/HistTx'
+        type: array
+        x-go-name: Txs
+    type: object
+    x-go-package: github.com/shapeshift/unchained-cosmos/service
+host: localhost:1660
+info:
+  description: Documentation of our awesome API.
+  title: awesome.
+  version: 1.0.0
+paths:
+  /account/{pubkey}:
+    get:
+      description: Gets account information
+      operationId: accountEndpointId
+      parameters:
+      - description: Pubkey (address) to get account details for
+        in: path
+        name: pubkey
+        required: true
+        type: string
+        x-go-name: Pubkey
+      responses:
+        "200":
+          $ref: '#/responses/accountResponse'
+        "500":
+          $ref: '#/responses/accountResponseError'
+      tags:
+      - account-tag
+  /account/{pubkey}/txs:
+    get:
+      description: Handles getting TX History for an account by pubkey (address)
+      operationId: txsEndpointId
+      parameters:
+      - description: Pubkey (address) to get tx history for
+        in: path
+        name: pubkey
+        required: true
+        type: string
+        x-go-name: Pubkey
+      responses:
+        "200":
+          $ref: '#/responses/txsResponse'
+        "500":
+          $ref: '#/responses/txsResponseError'
+      tags:
+      - txs-tag
+produces:
+- application/json
+responses:
+  accountResponse:
+    description: Account response contains informations about account (balance, sequence,
+      etc)
+    schema:
+      $ref: '#/definitions/Account'
+  accountResponseError:
+    description: Account response error
+    schema:
+      properties:
+        error:
+          example: error reading account for cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+          type: string
+          x-go-name: Error
+      type: object
+  txsResponse:
+    description: Tsxxs response contains tx history
+    schema:
+      $ref: '#/definitions/TxHistory'
+  txsResponseError:
+    description: Txs response error
+    schema:
+      properties:
+        error:
+          example: error reading txhistory for recipient cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+          type: string
+          x-go-name: Error
+      type: object
+schemes:
+- http
+swagger: "2.0"

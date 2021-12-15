@@ -12,6 +12,8 @@ type JsonRpcMsg struct {
 
 // Unchained API Types
 type TokenAmount struct {
-	Denom  string `json:"denom"`
+	// Example: uatom
+	Denom string `json:"denom"`
+	// Example: 420
 	Amount string `json:"amount"`
 }
