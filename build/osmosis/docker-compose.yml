@@ -1,0 +1,15 @@
+version: '3.4'
+services:
+  api:
+    container_name: "go-unchained-osmosis"
+    build:
+      context: .
+    environment:
+      REST_LISTEN_ADDR: localhost:1661
+    volumes:
+      - ../../:/app
+      - $GOPATH/pkg/mod/cache:/go/pkg/mod/cache
+    working_dir: /app
+    ports:
+      - "1661:1661"
+    restart: on-failure

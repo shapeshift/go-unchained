@@ -1,0 +1,15 @@
+version: '3.4'
+services:
+  api:
+    container_name: "go-unchained-cosmos"
+    build:
+      context: .
+    environment:
+      REST_LISTEN_ADDR: localhost:1660
+    volumes:
+      - ../../:/app
+      - $GOPATH/pkg/mod/cache:/go/pkg/mod/cache
+    working_dir: /app
+    ports:
+      - "1660:1660"
+    restart: on-failure
