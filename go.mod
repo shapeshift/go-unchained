@@ -14,8 +14,6 @@ require (
 require (
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
-	github.com/cespare/reflex v0.3.1 // indirect
-	github.com/creack/pty v1.1.11 // indirect
 	github.com/dchest/siphash v1.2.2 // indirect
 	github.com/eager7/dogd v0.0.0-20200427085516-2caf59f59dbb // indirect
 	github.com/eager7/dogutil v0.0.0-20200427040807-200e961ba4b5 // indirect
@@ -25,10 +23,8 @@ require (
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
-	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
 	github.com/ltcsuite/ltcd v0.20.1-beta.0.20201210074626-c807bfe31ef0 // indirect
 	github.com/ltcsuite/ltcutil v1.0.2-beta // indirect
-	github.com/ogier/pflag v0.0.1 // indirect
 	gitlab.com/thorchain/binance-sdk v1.2.3-0.20210117202539-d569b6b9ba5d // indirect
 )
 
