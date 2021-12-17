@@ -1,0 +1,15 @@
+version: '3.4'
+services:
+  api:
+    container_name: "go-unchained-thorchain"
+    build:
+      context: .
+    environment:
+      REST_LISTEN_ADDR: localhost:1662
+    volumes:
+      - ../../:/app
+      - $GOPATH/pkg/mod/cache:/go/pkg/mod/cache
+    working_dir: /app
+    ports:
+      - "1662:1662"
+    restart: on-failure
