@@ -1,50 +1,71 @@
 package main
 
 import (
-	// "net/http"
-	// _ "net/http/pprof"
+	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/shapeshift/unchained-cosmos/server/rest"
-	"github.com/shapeshift/unchained-cosmos/service"
-	log "github.com/sirupsen/logrus"
+	"github.com/shapeshift/go-unchained/coinstacks/cosmos/api"
+	"github.com/shapeshift/go-unchained/internal/config"
+	"github.com/shapeshift/go-unchained/internal/log"
+	"github.com/shapeshift/go-unchained/pkg/cosmos"
 )
 
-func main() {
-	log.Debug("")
-	start()
+var logger = log.WithoutFields()
+
+var confPath = flag.String("config", "cmd/cosmos/config.json", "path to configuration file")
+
+// Config for running application
+type Config struct {
+	APIKey  string `mapstructure:"apiKey"`
+	GRPCURL string `mapstructure:"grpcUrl"`
+	LCDURL  string `mapstructure:"lcdUrl"`
+	RPCURL  string `mapstructure:"rpcUrl"`
 }
 
-func start() {
-	// where to listen
-	restListenAddr := os.Getenv("REST_LISTEN_ADDR")
-	if restListenAddr == "" {
-		restListenAddr = "localhost:1660"
+func main() {
+	flag.Parse()
+
+	errChan := make(chan error, 1)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	conf := &Config{}
+	if err := config.Load(*confPath, conf); err != nil {
+		logger.Panic(err)
 	}
 
-	config := service.ChainConfig{
-		CosmosBase:          os.Getenv("COSMOS_BASE"),
-		TendermintBase:      os.Getenv("TENDERMINT_BASE"),
-		ApiKey:              os.Getenv("DATAHUB_API_KEY"),
-		GRPCBase:            os.Getenv("GRPC_BASE"),
-		RestListenAddr:      restListenAddr,
-		Bech32PrefixAccAddr: "cosmos",
-		Bech32PrefixAccPub:  "cosmospub",
-		RegisterTypes: func(registry codectypes.InterfaceRegistry) {
-			// cosmos so all stock protos
-		},
+	encoding := cosmos.NewEncoding()
+
+	cfg := cosmos.Config{
+		APIKey:           conf.APIKey,
+		Bech32AddrPrefix: "cosmos",
+		Bech32PkPrefix:   "cosmospub",
+		Encoding:         encoding,
+		GRPCURL:          conf.GRPCURL,
+		LCDURL:           conf.LCDURL,
+		RPCURL:           conf.RPCURL,
 	}
 
-	service, err := service.NewCosmosService(config)
+	httpClient, err := cosmos.NewHTTPClient(cfg)
 	if err != nil {
-		log.Errorf("dumping config: %#v", config)
-		log.Fatalf("error creating CosmosService: %s", err)
+		logger.Panic(err)
 	}
 
-	srv, err := rest.New(service, config)
+	grpcClient, err := cosmos.NewGRPCClient(cfg)
 	if err != nil {
-		log.Fatal("error starting http server: %s", err)
+		logger.Panic(err)
 	}
-	log.Infof("got srv: %#v", srv)
+	defer grpcClient.Shutdown()
+
+	go api.Start(httpClient, grpcClient, errChan)
+
+	select {
+	case err := <-errChan:
+		logger.Panic(err)
+	case <-sigChan:
+		grpcClient.Shutdown()
+		os.Exit(0)
+	}
 }
