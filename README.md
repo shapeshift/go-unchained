@@ -51,7 +51,7 @@ Unchained is a multi-blockchain backend interface with three main goals:
 ## Notes
 
 - The cosmos coinstack is used in all examples. If you wish to run a different coinstack, just replace `cosmos` with the coinstack name you wish to run
-- All paths are relative to the root unchained directory (ex. `go-unchained/{path}`)
+- All paths are relative to the root go-unchained directory (ex. `go-unchained/{path}`)
 
 ## Initial Setup
 
