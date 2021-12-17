@@ -1,44 +1,75 @@
 package main
 
 import (
-	// "net/http"
-	// _ "net/http/pprof"
+	"flag"
 	"os"
+	"os/signal"
+	"syscall"
 
-	"github.com/shapeshift/unchained-cosmos/osmosis"
-	"github.com/shapeshift/unchained-cosmos/server/rest"
-	"github.com/shapeshift/unchained-cosmos/service"
-	log "github.com/sirupsen/logrus"
+	gammtypes "github.com/osmosis-labs/osmosis/x/gamm/types"
+	lockuptypes "github.com/osmosis-labs/osmosis/x/lockup/types"
+	"github.com/shapeshift/go-unchained/coinstacks/osmosis/api"
+	"github.com/shapeshift/go-unchained/internal/config"
+	"github.com/shapeshift/go-unchained/internal/log"
+	"github.com/shapeshift/go-unchained/pkg/cosmos"
 )
 
-func main() {
-	start()
+var logger = log.WithoutFields()
+
+var confPath = flag.String("config", "cmd/osmosis/config.json", "path to configuration file")
+
+type Config struct {
+	APIKey  string `mapstructure:"apiKey"`
+	GRPCURL string `mapstructure:"grpcUrl"`
+	LCDURL  string `mapstructure:"lcdUrl"`
+	RPCURL  string `mapstructure:"rpcUrl"`
 }
 
-func start() {
-	// where to listen
-	restListenAddr := os.Getenv("REST_LISTEN_ADDR")
+func main() {
+	flag.Parse()
 
-	config := service.ChainConfig{
-		CosmosBase:          os.Getenv("COSMOS_BASE"),
-		TendermintBase:      os.Getenv("TENDERMINT_BASE"),
-		ApiKey:              os.Getenv("DATAHUB_OSMO_API_KEY"),
-		GRPCBase:            os.Getenv("GRPC_BASE"),
-		RestListenAddr:      restListenAddr,
-		Bech32PrefixAccAddr: "osmo",
-		Bech32PrefixAccPub:  "osmopub",
-		RegisterTypes:       osmosis.RegisterTypes,
-		EventHandler:        osmosis.OsmosisEventHandler,
+	errChan := make(chan error, 1)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	conf := &Config{}
+	if err := config.Load(*confPath, conf); err != nil {
+		logger.Panic(err)
 	}
 
-	service, err := service.NewCosmosService(config)
-	if err != nil {
-		log.Errorf("dumping config: %#v", config)
-		log.Fatalf("error creating CosmosService: %s", err)
+	encoding := cosmos.NewEncoding(
+		gammtypes.RegisterInterfaces,
+		lockuptypes.RegisterInterfaces,
+	)
+
+	cfg := cosmos.Config{
+		APIKey:           conf.APIKey,
+		Bech32AddrPrefix: "osmo",
+		Bech32PkPrefix:   "osmopub",
+		Encoding:         encoding,
+		GRPCURL:          conf.GRPCURL,
+		LCDURL:           conf.LCDURL,
+		RPCURL:           conf.RPCURL,
 	}
-	srv, err := rest.New(service, config)
+
+	httpClient, err := cosmos.NewHTTPClient(cfg)
 	if err != nil {
-		log.Fatal("error starting http server: %s", err)
+		logger.Panic(err)
 	}
-	log.Infof("got srv: %#v", srv)
+
+	grpcClient, err := cosmos.NewGRPCClient(cfg)
+	if err != nil {
+		logger.Panic(err)
+	}
+	defer grpcClient.Shutdown()
+
+	go api.Start(httpClient, grpcClient, errChan)
+
+	select {
+	case err := <-errChan:
+		logger.Panic(err)
+	case <-sigChan:
+		grpcClient.Shutdown()
+		os.Exit(0)
+	}
 }
