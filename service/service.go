@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -20,6 +21,7 @@ import (
 	ibclighttypes "github.com/cosmos/cosmos-sdk/x/ibc/light-clients/07-tendermint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/go-resty/resty/v2"
+	ws "github.com/gorilla/websocket"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -30,11 +32,13 @@ type CosmosService struct {
 	cosmosLightClient   *resty.Client
 	tendermintRPCClient *resty.Client
 	grpcConn            *grpc.ClientConn
+	wsConn              *ws.Conn
 }
 
 type ChainConfig struct {
 	CosmosBase          string
 	TendermintBase      string
+	TendermintWSBase    string
 	GRPCBase            string
 	WebsocketBase       string
 	ApiKey              string // apiKey for node if required
@@ -43,6 +47,50 @@ type ChainConfig struct {
 	Bech32PrefixAccPub  string // cosmospub
 	RegisterTypes       func(registry types.InterfaceRegistry)
 	EventHandler        func(tx *HistTx, evt TendermintEvent) []TxAction
+}
+
+type SubscribeMsg struct {
+	JsonRpcMsg
+	Method string   `json:"method"`
+	Params []string `json:"params"`
+}
+
+type NewBlockMsg struct { //result.data.value.block.height
+	JsonRpcMsg
+	Result BlockMsgResult `json:"result"`
+}
+
+type BlockMsgResult struct {
+	Query string       `json:"query"`
+	Data  BlockMsgData `json:"data"`
+}
+type BlockMsgData struct {
+	Type  string        `json:"type"`
+	Value BlockMsgValue `json:"value"`
+}
+
+type BlockMsgValue struct {
+	Block BlockMsgBlock `json:"block"`
+}
+
+type BlockMsgBlock struct {
+	Header BlockMsgHeader    `json:"header"`
+	Data   BlockMsgBlockData `json:"data"`
+}
+
+type BlockMsgBlockData struct {
+	Txs []string `json:"txs"`
+}
+type BlockMsgHeader struct {
+	Version BlockMsgHeaderVersion `json:"version"`
+	ChainID string                `json:"chain_id"`
+	Height  string                `json:"height"`
+	Time    string                `json:"time"`
+}
+
+type BlockMsgHeaderVersion struct {
+	Block string `json:"block"`
+	App   string `json:"app"`
 }
 
 // var (
@@ -69,6 +117,16 @@ func NewCosmosService(chainConfig ChainConfig) (*CosmosService, error) {
 			return nil
 		}
 	}
+
+	wsConn, err := wsConnect(chainConfig)
+	if err != nil {
+		log.Errorf("error connecting to tendermint websocket at %s: %s", chainConfig.TendermintWSBase, err)
+	} else {
+		if err = subscribeBlocks(wsConn); err != nil {
+			log.Errorf("error connecting to tendermint websocket at %s: %s", chainConfig.TendermintWSBase, err)
+		}
+	}
+
 	c := &CosmosService{
 		chainConfig:    chainConfig,
 		encodingConfig: &encodingConfig,
@@ -76,10 +134,80 @@ func NewCosmosService(chainConfig ChainConfig) (*CosmosService, error) {
 			SetHeader("Authorization", chainConfig.ApiKey).SetTimeout(10 * time.Second),
 		tendermintRPCClient: resty.New().SetBaseURL(chainConfig.TendermintBase).SetHeader("Accept", "application/json").
 			SetHeader("Authorization", chainConfig.ApiKey).SetTimeout(10 * time.Second),
-		// TODO - websockets/grpc
+		wsConn: wsConn,
 	}
 
+	go c.listen()
+
 	return c, nil
+}
+
+func (c *CosmosService) listen() {
+	if c.wsConn == nil {
+		log.Errorf("no websocket connection to listen on")
+		return
+	}
+
+	for {
+		msg := NewBlockMsg{}
+		if err := c.wsConn.ReadJSON(&msg); err != nil {
+			log.Errorf("error reading json message: %s", err)
+			break
+		}
+		if msg.Result.Data.Type != "tendermint/event/NewBlock" {
+			log.Infof("not a block msg")
+			continue
+		}
+		log.Infof("received block at height %s with %d txs", msg.Result.Data.Value.Block.Header.Height, len(msg.Result.Data.Value.Block.Data.Txs))
+
+		for _, tx := range msg.Result.Data.Value.Block.Data.Txs {
+			protoEncoded, err := base64.StdEncoding.DecodeString(tx)
+			if err != nil {
+				log.Errorf("error decoding tx %s: %s", tx, err)
+			}
+
+			sdkTx, err := c.encodingConfig.TxConfig.TxDecoder()(protoEncoded)
+			if err != nil {
+				log.Errorf("error decoding proto tx: %s", err)
+				continue
+			}
+
+			msgs := sdkTx.GetMsgs()
+			for _, msg := range msgs {
+				log.Infof("received %s message", msg.Type())
+			}
+		}
+	}
+}
+
+func subscribeBlocks(wsConn *ws.Conn) error {
+	subscribeMessage := SubscribeMsg{
+		JsonRpcMsg: JsonRpcMsg{
+			ID:      0,
+			Jsonrpc: "2.0",
+		},
+		Method: "subscribe",
+		Params: []string{"tm.event='NewBlock'"},
+	}
+
+	if err := wsConn.WriteJSON(subscribeMessage); err != nil {
+		log.Errorf("error sending subscribe message: %s", err)
+		return fmt.Errorf("error sending subscribe message: %w", err)
+	}
+	return nil
+}
+
+func wsConnect(chainConfig ChainConfig) (*ws.Conn, error) {
+	var wsDialer ws.Dialer
+	wsUrl := fmt.Sprintf("%s/apikey/%s/websocket", chainConfig.TendermintWSBase, chainConfig.ApiKey)
+	log.Infof("connecting to tendermint websocket at %s", wsUrl)
+	wsConn, _, err := wsDialer.Dial(wsUrl, nil)
+	if err != nil {
+		log.Errorf("error connecting ws: %s", err)
+		return nil, err
+	}
+	log.Infof("successfully connected websocket")
+	return wsConn, nil
 }
 
 func MakeEncodingConfig(config ChainConfig) params.EncodingConfig {

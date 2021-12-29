@@ -23,9 +23,12 @@ func start() {
 		restListenAddr = "localhost:1660"
 	}
 
+	x := os.Getenv("TENDERMINT_WS_BASE")
+	_ = x
 	config := service.ChainConfig{
 		CosmosBase:          os.Getenv("COSMOS_BASE"),
 		TendermintBase:      os.Getenv("TENDERMINT_BASE"),
+		TendermintWSBase:    os.Getenv("TENDERMINT_WS_BASE"),
 		ApiKey:              os.Getenv("DATAHUB_API_KEY"),
 		RestListenAddr:      restListenAddr,
 		Bech32PrefixAccAddr: "cosmos",

@@ -30,6 +30,18 @@ func getCosmosService() *CosmosService {
 	return clt
 }
 
+func TestWsConnect(t *testing.T) {
+	cc := ChainConfig{
+		CosmosBase:          "https://cosmoshub-4--lcd--archive.datahub.figment.io",
+		TendermintBase:      "https://cosmoshub-4--rpc--archive.datahub.figment.io",
+		TendermintWSBase:    "wss://cosmoshub-4--rpc--archive.datahub.figment.io",
+		ApiKey:              os.Getenv("DATAHUB_API_KEY"),
+		Bech32PrefixAccAddr: "cosmos",
+		Bech32PrefixAccPub:  "cosmospub",
+	}
+	wsConnect(cc)
+}
+
 func TestGetAccount(t *testing.T) {
 	c := getCosmosService()
 	acct, err := c.GetAccount(address)
