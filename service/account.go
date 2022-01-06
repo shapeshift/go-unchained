@@ -12,18 +12,25 @@ import (
 )
 
 type Account struct {
-	Pubkey        string        `json:"pubkey"`
-	AccountNumber uint64        `json:"accountNumber,string"`
-	Sequence      uint64        `json:"sequence,string"`
-	Balance       string        `json:"balance"`
-	Tokens        []TokenAmount `json:"tokens"`
-	Delegations   []Delegation  `json:"delegations"`
+	// Example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+	Pubkey string `json:"pubkey"`
+	// Example: 9810
+	AccountNumber uint64 `json:"accountNumber,string"`
+	// Example: 43211
+	Sequence uint64 `json:"sequence,string"`
+	// Example: 14250
+	Balance     string        `json:"balance"`
+	Tokens      []TokenAmount `json:"tokens"`
+	Delegations []Delegation  `json:"delegations"`
 }
 
 type Delegation struct {
+	// Example: cosmosvaloper156gqf9837u7d4c4678yt3rl4ls9c5vuursrrzf
 	Validator string `json:"validator"`
-	Amount    string `json:"amount"`
-	Shares    string `json:"shares"`
+	// Example: 45531
+	Amount string `json:"amount"`
+	// Example: 86544
+	Shares string `json:"shares"`
 }
 
 func (c *CosmosService) readDelegations(address string) ([]stakingtypes.DelegationResponse, error) {

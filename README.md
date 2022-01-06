@@ -14,3 +14,9 @@ Add support for cosmos and cosmos-sdk chains
 - The core functionality of chains like Osmosis and Thorchain is identical to Cosmos
 - We can write the Cosmos SDK implementation once, and provide mechanisms to inject chain specific behavior (additional protos, support for custom messages and event logs, custom API routes etc)
 
+# Swagger
+
+- Install go-swagger (homebrew works for osx)
+- Create vendor package by running: `go mod vendor`
+- Generate swagger spec from source by running: `swagger generate spec -o ./swagger.yaml --scan-models`
+- Start swagger docs server: `swagger serve -F=swagger swagger.yaml`

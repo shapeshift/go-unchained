@@ -61,6 +61,7 @@ type TxAction interface {
 	GetType() string
 }
 type BaseTxAction struct {
+	// Example: transfer
 	Type string `json:"type"`
 }
 
@@ -70,60 +71,90 @@ func (action BaseTxAction) GetType() string {
 
 type TransferTxAction struct {
 	BaseTxAction
+	// Example: cosmos1x54ltnyg88k0ejmk8ytwrhd3ltm84xehrnlslf
 	FromAddress string `json:"fromAddress"`
-	ToAddress   string `json:"toAddress"`
-	Asset       string `json:"asset"`
-	Amount      string `json:"amount"`
+	// Example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+	ToAddress string `json:"toAddress"`
+	// Example: utatom
+	Asset string `json:"asset"`
+	// Example: 71478
+	Amount string `json:"amount"`
 }
 
 type DelegateTxAction struct {
 	BaseTxAction
+	// Example: cosmosvaloper156gqf9837u7d4c4678yt3rl4ls9c5vuursrrzf
 	Validator string `json:"validator"`
-	Amount    string `json:"amount"`
+	// Example: 21478
+	Amount string `json:"amount"`
 }
 
 type ReDelegateTxAction struct {
 	BaseTxAction
+	// Example: cosmosvaloper156gqf9837u7d4c4678yt3rl4ls9c5vuursrrzf
 	SourceValidator string `json:"sourceValidator"`
-	DestValidator   string `json:"destValidator"`
-	Amount          string `json:"amount"`
+	// Example: cosmosvaloper14lultfckehtszvzw4ehu0apvsr77afvyju5zzy
+	DestValidator string `json:"destValidator"`
+	// Example: 46012
+	Amount string `json:"amount"`
 }
 
 type WithdrawRewardsTxAction struct {
 	BaseTxAction
+	// Example: cosmosvaloper14lultfckehtszvzw4ehu0apvsr77afvyju5zzy
 	Validator string `json:"validator"`
-	Asset     string `json:"asset"`
-	Amount    string `json:"amount"`
+	// Example: uatom
+	Asset string `json:"asset"`
+	// Example: 42069
+	Amount string `json:"amount"`
 }
 
 type IBCTransferTxAction struct {
 	BaseTxAction
+	// Example: cosmos1x54ltnyg88k0ejmk8ytwrhd3ltm84xehrnlslf
 	FromAddress string `json:"fromAddress"`
-	ToAddress   string `json:"toAddress"`
+	// Example: cosmosvaloper156gqf9837u7d4c4678yt3rl4ls9c5vuursrrzf
+	ToAddress string `json:"toAddress"`
 }
 
 // Unchained API Historical Tx Model
 type HistTx struct {
-	Type          string     `json:"type"`
-	TxID          string     `json:"txid"`
-	Status        string     `json:"status"`
-	From          string     `json:"from,omitempty"`
-	To            string     `json:"to,omitempty"`
-	BlockHeight   int64      `json:"blockHeight"`
-	Index         uint       `json:"index"`
-	Confirmations int64      `json:"confirmations"`
-	Timestamp     int64      `json:"timestamp"`
-	Value         string     `json:"value,omitempty"`
-	Memo          string     `json:"memo,omitempty"`
-	Fee           string     `json:"fee"`
-	FeeAsset      string     `json:"feeAsset"`
-	GasWanted     string     `json:"gasWanted"`
-	GasUsed       string     `json:"gasUsed"`
-	Actions       []TxAction `json:"actions"`
+	// Example: send
+	Type string `json:"type"`
+	// Example: B3127187CA99D7F2C0BAE4FA26512F204B6CEC80AD3C3AE514B8D3A77CD99B43
+	TxID string `json:"txid"`
+	// Example: confirmed
+	Status string `json:"status"`
+	// Example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+	From string `json:"from,omitempty"`
+	// Example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
+	To string `json:"to,omitempty"`
+	// Example: 34534
+	BlockHeight int64 `json:"blockHeight"`
+	// Example: 678678
+	Index uint `json:"index"`
+	// Example: 24346
+	Confirmations int64 `json:"confirmations"`
+	// Example: 1639598717717
+	Timestamp int64 `json:"timestamp"`
+	// Example: 866543
+	Value string `json:"value,omitempty"`
+	// Example: This is a memo
+	Memo string `json:"memo,omitempty"`
+	// Example: 4223
+	Fee string `json:"fee"`
+	// Example: 'uatom'
+	FeeAsset string `json:"feeAsset"`
+	// Example: 42345
+	GasWanted string `json:"gasWanted"`
+	// Example: 383312
+	GasUsed string     `json:"gasUsed"`
+	Actions []TxAction `json:"actions"`
 }
 
 type TxHistory struct {
 	// TODO - pagination
+	// Example: cosmos1fx4jwv3aalxqwmrpymn34l582lnehr3eqwuz9e
 	Pubkey string   `json:"pubkey"`
 	Txs    []HistTx `json:"txs"`
 }

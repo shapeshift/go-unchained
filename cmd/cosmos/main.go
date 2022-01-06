@@ -6,6 +6,7 @@ import (
 	"os"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	_ "github.com/shapeshift/unchained-cosmos/docs/cosmos"
 	"github.com/shapeshift/unchained-cosmos/server/rest"
 	"github.com/shapeshift/unchained-cosmos/service"
 	log "github.com/sirupsen/logrus"

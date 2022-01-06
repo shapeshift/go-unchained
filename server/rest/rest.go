@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/shapeshift/unchained-cosmos/service"
 
@@ -44,6 +45,7 @@ func (s *UnchainedRestServer) start() {
 	router.StrictSlash(true)
 
 	router.HandleFunc("/account/{pubkey}", s.GetAccount)
+
 	router.HandleFunc("/account/{pubkey}/txs", s.GetTxHistory)
 
 	listenAddr := s.config.RestListenAddr
@@ -51,8 +53,11 @@ func (s *UnchainedRestServer) start() {
 		listenAddr = "localhost:1660"
 	}
 
+	credentials := handlers.AllowCredentials()
+	methods := handlers.AllowedMethods([]string{"*"})
+	origins := handlers.AllowedOrigins([]string{"*"})
 	log.Infof("invoking ListenAndServe on %s", listenAddr)
-	log.Errorf("ListenAndServe returned: %s", http.ListenAndServe(listenAddr, router))
+	log.Errorf("ListenAndServe returned: %s", http.ListenAndServe(listenAddr, handlers.CORS(credentials, methods, origins)(router)))
 }
 
 func writeError(writer http.ResponseWriter, errRes ErrorResponse) error {
